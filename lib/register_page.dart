@@ -36,9 +36,12 @@ class _RegisterPageState extends State<RegisterPage> {
       print(jsonResponse['status']);
 
       if (jsonResponse['status']) {
-
-      }else {
-        
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => LoginPage()),
+        );
+      } else {
+        print("Something went wrong");
       }
     } else {
       setState(() {
