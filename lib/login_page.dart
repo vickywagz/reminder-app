@@ -1,6 +1,12 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:http/http.dart' as http;
+import 'package:reminder_app/config.dart';
+import 'package:reminder_app/dashboard.dart';
 import 'package:reminder_app/register_page.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -12,12 +18,48 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
+  late SharedPreferences prefs;
 
   @override
-  void dispose() {
-    emailController.dispose();
-    passwordController.dispose();
-    super.dispose();
+  void initState() {
+    super.initState();
+    initSharedPrefs();
+  }
+
+  void initSharedPrefs() async {
+    prefs = await SharedPreferences.getInstance();
+  }
+
+  void loginUser() async {
+    if (emailController.text.isNotEmpty &&
+        passwordController.text.isNotEmpty) {
+      var reqBody = {
+        "email": emailController.text,
+        "password": passwordController.text,
+      };
+
+      var response = await http.post(
+        Uri.parse(login),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode(reqBody),
+      );
+
+      var jsonResponse = jsonDecode(response.body);
+
+      if (jsonResponse['status']) {
+        var myToken = jsonResponse['token'];
+        prefs.setString('token', myToken);
+
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => Dashboard(token: myToken),
+          ),
+        );
+      } else {
+        print('Something went wrong');
+      }
+    }
   }
 
   @override
@@ -36,8 +78,7 @@ class _LoginPageState extends State<LoginPage> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const SizedBox(height: 40),
-          
-              // Title
+
               const Text(
                 "Welcome Back",
                 style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
@@ -47,26 +88,49 @@ class _LoginPageState extends State<LoginPage> {
                 "Login to continue",
                 style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
               ),
-          
+
               const SizedBox(height: 40),
-          
-              // Inputs
-               CustomInput(label: "Email", icon: Icons.email_outlined, controller: emailController,),
-              const SizedBox(height: 16),
-               CustomInput(
-                label: "Password",
-                icon: Icons.lock_outline,
-                obscureText: true,
-                controller: passwordController,
+
+              /// EMAIL FIELD
+              TextField(
+                controller: emailController,
+                decoration: InputDecoration(
+                  labelText: "Email",
+                  prefixIcon: const Icon(Icons.email_outlined),
+                  filled: true,
+                  fillColor: Colors.grey.shade100,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: BorderSide.none,
+                  ),
+                ),
               ),
-          
+
+              const SizedBox(height: 16),
+
+              /// PASSWORD FIELD
+              TextField(
+                controller: passwordController,
+                obscureText: true,
+                decoration: InputDecoration(
+                  labelText: "Password",
+                  prefixIcon: const Icon(Icons.lock_outline),
+                  filled: true,
+                  fillColor: Colors.grey.shade100,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: BorderSide.none,
+                  ),
+                ),
+              ),
+
               const SizedBox(height: 50),
-          
-              // Login Button
+
+              /// LOGIN BUTTON
               SizedBox(
                 height: 55,
                 child: ElevatedButton(
-                  onPressed: () {},
+                  onPressed: loginUser,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xff0095FF),
                     shape: RoundedRectangleBorder(
@@ -84,10 +148,10 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                 ),
               ),
-          
-               const SizedBox(height: 30),
-          
-              // Footer
+
+              const SizedBox(height: 30),
+
+              /// FOOTER
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -111,43 +175,10 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                 ],
               ),
-          
+
               const SizedBox(height: 50),
             ],
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class CustomInput extends StatelessWidget {
-  final String label;
-  final IconData icon;
-  final bool obscureText;
-  final TextEditingController controller;
-
-  const CustomInput({
-    super.key,
-    required this.controller,
-    required this.label,
-    required this.icon,
-    this.obscureText = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return TextField(
-      controller: controller,
-      obscureText: obscureText,
-      decoration: InputDecoration(
-        labelText: label,
-        prefixIcon: Icon(icon),
-        filled: true,
-        fillColor: Colors.grey.shade100,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide.none,
         ),
       ),
     );

@@ -1,9 +1,9 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:reminder_app/login_page.dart';
 import 'package:http/http.dart' as http;
 import 'config.dart';
+import 'login_page.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -15,8 +15,7 @@ class RegisterPage extends StatefulWidget {
 class _RegisterPageState extends State<RegisterPage> {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
-
-  bool _isNotValidate = false;
+  bool _showError = false;
 
   void registerUser() async {
     if (emailController.text.isNotEmpty && passwordController.text.isNotEmpty) {
@@ -25,27 +24,30 @@ class _RegisterPageState extends State<RegisterPage> {
         "password": passwordController.text,
       };
 
-      var response = await http.post(
-        Uri.parse(registration),
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode(regBody),
-      );
-
-      var jsonResponse = jsonDecode(response.body);
-
-      print(jsonResponse['status']);
-
-      if (jsonResponse['status']) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => LoginPage()),
+      try {
+        var response = await http.post(
+          Uri.parse(registration),
+          headers: {"Content-Type": "application/json"},
+          body: jsonEncode(regBody),
         );
-      } else {
-        print("Something went wrong");
+
+        var jsonResponse = jsonDecode(response.body);
+
+        if (jsonResponse['status']) {
+          // Navigate to login page on success
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const LoginPage()),
+          );
+        } else {
+          print("Something went wrong");
+        }
+      } catch (e) {
+        print("Error: $e");
       }
     } else {
       setState(() {
-        _isNotValidate = true;
+        _showError = true;
       });
     }
   }
@@ -58,6 +60,7 @@ class _RegisterPageState extends State<RegisterPage> {
         elevation: 0,
         backgroundColor: Colors.white,
         systemOverlayStyle: SystemUiOverlayStyle.dark,
+        title: const Text("Create Account"),
       ),
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 28),
@@ -67,9 +70,8 @@ class _RegisterPageState extends State<RegisterPage> {
             children: [
               const SizedBox(height: 40),
 
-              // Title
               const Text(
-                "Create Account ",
+                "Create Account",
                 style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
@@ -77,34 +79,52 @@ class _RegisterPageState extends State<RegisterPage> {
                 "Sign up to get started",
                 style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
               ),
-
               const SizedBox(height: 40),
 
-              // Inputs (ONLY TWO)
-              CustomInput(
-                label: "Email",
-                icon: Icons.email_outlined,
+              /// EMAIL FIELD
+              TextField(
                 controller: emailController,
-                showError: _isNotValidate,
+                decoration: InputDecoration(
+                  labelText: "Email",
+                  prefixIcon: const Icon(Icons.email_outlined),
+                  filled: true,
+                  fillColor: Colors.grey.shade100,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: BorderSide.none,
+                  ),
+                  errorText: _showError && emailController.text.isEmpty
+                      ? "Email is required"
+                      : null,
+                ),
               ),
               const SizedBox(height: 16),
-              CustomInput(
-                label: "Password",
-                icon: Icons.lock_outline,
-                obscureText: true,
+
+              /// PASSWORD FIELD
+              TextField(
                 controller: passwordController,
-                showError: _isNotValidate,
+                obscureText: true,
+                decoration: InputDecoration(
+                  labelText: "Password",
+                  prefixIcon: const Icon(Icons.lock_outline),
+                  filled: true,
+                  fillColor: Colors.grey.shade100,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: BorderSide.none,
+                  ),
+                  errorText: _showError && passwordController.text.isEmpty
+                      ? "Password is required"
+                      : null,
+                ),
               ),
+              const SizedBox(height: 50),
 
-              const SizedBox(height: 30),
-
-              // Sign Up Button
+              /// SIGN UP BUTTON
               SizedBox(
                 height: 55,
                 child: ElevatedButton(
-                  onPressed: () {
-                    registerUser();
-                  },
+                  onPressed: registerUser,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xff0095FF),
                     shape: RoundedRectangleBorder(
@@ -122,10 +142,9 @@ class _RegisterPageState extends State<RegisterPage> {
                   ),
                 ),
               ),
+              const SizedBox(height: 30),
 
-              const SizedBox(height: 50),
-
-              // Footer
+              /// FOOTER
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -149,46 +168,9 @@ class _RegisterPageState extends State<RegisterPage> {
                   ),
                 ],
               ),
-
               const SizedBox(height: 50),
             ],
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class CustomInput extends StatelessWidget {
-  final String label;
-  final IconData icon;
-  final bool obscureText;
-  final TextEditingController controller;
-  final bool showError;
-
-  const CustomInput({
-    super.key,
-    this.showError = false,
-    required this.controller,
-    required this.label,
-    required this.icon,
-    this.obscureText = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return TextField(
-      controller: controller,
-      obscureText: obscureText,
-      decoration: InputDecoration(
-        labelText: label,
-        prefixIcon: Icon(icon),
-        errorText: showError ? "This field is required" : null,
-        filled: true,
-        fillColor: Colors.grey.shade100,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide.none,
         ),
       ),
     );
