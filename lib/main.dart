@@ -1,28 +1,25 @@
 import 'package:flutter/material.dart';
-import 'package:jwt_decoder/jwt_decoder.dart';
-import 'package:reminder_app/dashboard.dart';
-import 'package:reminder_app/login_page.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:reminder_app/app.rout.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  SharedPreferences prefs = await SharedPreferences.getInstance();
-  runApp(MyApp(token: prefs.getString('token')));
+
+  runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
-  final token;
-
-  const MyApp({@required this.token, Key? key}) : super(key: key);
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return MaterialApp.router(
+      routerConfig: router,
       debugShowCheckedModeBanner: false,
-      home:
-          (JwtDecoder.isExpired(token) == false)
-              ? Dashboard(token: token)
-              : LoginPage(),
+       title: 'Reminder App',
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+      ),
     );
+    
   }
 }

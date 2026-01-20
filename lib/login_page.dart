@@ -1,12 +1,6 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:http/http.dart' as http;
-import 'package:reminder_app/config.dart';
-import 'package:reminder_app/dashboard.dart';
-import 'package:reminder_app/register_page.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:go_router/go_router.dart';
+import 'package:reminder_app/common/password.textfield.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -16,167 +10,157 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  final TextEditingController emailController = TextEditingController();
-  final TextEditingController passwordController = TextEditingController();
-  late SharedPreferences prefs;
-
-  @override
-  void initState() {
-    super.initState();
-    initSharedPrefs();
-  }
-
-  void initSharedPrefs() async {
-    prefs = await SharedPreferences.getInstance();
-  }
-
-  void loginUser() async {
-    if (emailController.text.isNotEmpty &&
-        passwordController.text.isNotEmpty) {
-      var reqBody = {
-        "email": emailController.text,
-        "password": passwordController.text,
-      };
-
-      var response = await http.post(
-        Uri.parse(login),
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode(reqBody),
-      );
-
-      var jsonResponse = jsonDecode(response.body);
-
-      if (jsonResponse['status']) {
-        var myToken = jsonResponse['token'];
-        prefs.setString('token', myToken);
-
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => Dashboard(token: myToken),
-          ),
-        );
-      } else {
-        print('Something went wrong');
-      }
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(
-        elevation: 0,
-        backgroundColor: Colors.white,
-        systemOverlayStyle: SystemUiOverlayStyle.dark,
-      ),
-      body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 28),
-        child: SingleChildScrollView(
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              const SizedBox(height: 40),
+              const Spacer(),
 
+              // Top icon container
+              Container(
+                width: 80,
+                height: 80,
+                decoration: BoxDecoration(
+                  color: Colors.indigo,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: const Icon(Icons.check, color: Colors.white, size: 40),
+              ),
+
+              const SizedBox(height: 16),
+
+              // Title text
               const Text(
-                "Welcome Back",
-                style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                "Login to continue",
-                style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
+                "Welcome back!",
+                style: TextStyle(fontSize: 22, fontWeight: FontWeight.w600),
               ),
 
-              const SizedBox(height: 40),
+              const SizedBox(height: 52),
 
-              /// EMAIL FIELD
+              const Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'EMAIL ADDRESS',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.grey,
+                  ),
+                ),
+              ),
+              // Email input field
               TextField(
-                controller: emailController,
+                keyboardType: TextInputType.emailAddress,
                 decoration: InputDecoration(
-                  labelText: "Email",
-                  prefixIcon: const Icon(Icons.email_outlined),
-                  filled: true,
-                  fillColor: Colors.grey.shade100,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(14),
-                    borderSide: BorderSide.none,
+                  hintText: 'Email address',
+                  hintStyle: TextStyle(
+                    color: Colors.grey.shade500,
+                    fontSize: 14,
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 18,
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(20),
+                    borderSide: BorderSide(color: Colors.grey.shade300),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(20),
+                    borderSide: const BorderSide(color: Colors.indigo),
                   ),
                 ),
               ),
 
               const SizedBox(height: 16),
 
-              /// PASSWORD FIELD
-              TextField(
-                controller: passwordController,
-                obscureText: true,
-                decoration: InputDecoration(
-                  labelText: "Password",
-                  prefixIcon: const Icon(Icons.lock_outline),
-                  filled: true,
-                  fillColor: Colors.grey.shade100,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(14),
-                    borderSide: BorderSide.none,
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 50),
-
-              /// LOGIN BUTTON
-              SizedBox(
-                height: 55,
-                child: ElevatedButton(
-                  onPressed: loginUser,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xff0095FF),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    elevation: 0,
-                  ),
-                  child: const Text(
-                    "Login",
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 30),
-
-              /// FOOTER
+              // Password label row (label + forgot password)
               Row(
-                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text("Don’t have an account? "),
-                  GestureDetector(
-                    onTap: () {
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const RegisterPage(),
-                        ),
-                      );
-                    },
+                  const Text(
+                    'PASSWORD',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.grey,
+                    ),
+                  ),
+
+                  TextButton(
+                    onPressed: () {},
+                    style: TextButton.styleFrom(
+                      padding: EdgeInsets.zero,
+                      minimumSize: Size.zero,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
                     child: const Text(
-                      "Sign Up",
+                      'Forgot password?',
                       style: TextStyle(
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xff0095FF),
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.indigo,
                       ),
                     ),
                   ),
                 ],
               ),
 
-              const SizedBox(height: 50),
+              // Password input field
+              const PasswordField(),
+
+              const SizedBox(height: 24),
+
+              // Sign up button
+              SizedBox(
+                width: MediaQuery.of(context).size.width * 0.4,
+                height: 50,
+                child: ElevatedButton(
+                  onPressed: () {
+                    context.go("/dashboard");
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.indigo,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(23),
+                    ),
+                  ),
+                  child: const Text(
+                    'Log in',
+                    style: TextStyle(fontSize: 16, color: Colors.white),
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 24),
+
+              // Login redirect text
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Text("Don't have an account? "),
+                  GestureDetector(
+                    onTap: () {
+                      context.go('/register');
+                    },
+                    child: const Text(
+                      "Sign up",
+                      style: TextStyle(
+                        color: Colors.indigo,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+
+              const Spacer(),
             ],
           ),
         ),
